@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APU Services Portal</title>
+    <style>
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', Arial, sans-serif;
+        }
+
+        body {
+            background: url('APU Background.jpg') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 420px;
+            padding: 32px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header h2 {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            margin: 12px 0;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn.primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn.primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn.secondary {
+            background: #e8f0ff;
+            color: #2563eb;
+            border: 2px solid #2563eb;
+        }
+
+        .btn.secondary:hover {
+            background: #d8eaff;
+        }
+
+        .btn.link {
+            text-align: center;
+            background: transparent;
+            color: #2563eb;
+            font-weight: 500;
+        }
+
+        .btn.link:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: #f0f4f8;
+            color: #666;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: #e8e8eb;
+        }
+
+        .ticket-info {
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        .ticket-number {
+            font-size: 56px;
+            color: #2563eb;
+            font-weight: bold;
+            margin: 16px 0;
+        }
+
+        .current-number {
+            font-size: 32px;
+            color: #333;
+            margin: 16px 0;
+        }
+
+        .wait-time {
+            color: #777;
+            font-size: 14px;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Technician Dashboard */
+        .ticket-list {
+            margin-top: 20px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .ticket-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 10px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .ticket-item button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .ticket-item button:hover {
+            background-color: #1d4ed8;
+        }
+
+    </style>
+    <script>
+        let ticketCounter = 1;
+        let currentServing = 0;
+        let tickets = [];
+        let currentTicketNumber = null;
+
+        // Show the selected page
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        // Generate a ticket for a selected service
+        function generateTicket(serviceType) {
+            const troubleshootingMessage = document.getElementById('troubleshootingMessage');
+
+            // Reset message visibility
+            troubleshootingMessage.style.display = 'none';
+
+            if (serviceType === 'Software Troubleshooting') {
+                const proceed = confirm(
+                    "Please refer to APU Knowledge Base. If the issue still persists, please wait for assistance. Do you want to proceed?"
+                );
+                if (!proceed) return; // Stop if the user cancels
+
+                // Show the troubleshooting message
+                troubleshootingMessage.style.display = 'block';
+            }
+
+            if (serviceType === 'Printing Services') {
+                window.open('https://forms.office.com/r/eeaZHfG9is', '_blank');
+            }
+
+            const ticketNumber = ticketCounter++;
+            tickets.push({ ticketNumber, serviceType, served: false });
+            currentTicketNumber = ticketNumber;
+
+            document.getElementById('ticketNumber').textContent = ticketNumber;
+            document.getElementById('currentNumber').textContent = currentServing;
+            document.getElementById('waitTime').textContent = `Estimated wait time: ${(ticketNumber - currentServing) * 5} minutes`;
+
+            alert(`Your ticket for "${serviceType}" has been created. Your ticket number is ${ticketNumber}.`);
+            showPage('ticketPage');
+        }
+
+        // Cancel the current ticket
+        function cancelTicket() {
+            if (currentTicketNumber !== null) {
+                tickets = tickets.filter(ticket => ticket.ticketNumber !== currentTicketNumber);
+                alert(`Your ticket #${currentTicketNumber} has been canceled.`);
+                currentTicketNumber = null;
+                showPage('landingPage');
+            } else {
+                alert("No active ticket to cancel.");
+            }
+        }
+
+        // Update the current serving number every 3 seconds
+        setInterval(() => {
+            if (currentServing < ticketCounter - 1) {
+                currentServing++;
+                document.getElementById('currentNumber').textContent = currentServing;
+            }
+        }, 3000); // 3 seconds interval
+
+        // Technician Dashboard
+        function loginTA() {
+            const username = prompt("Enter Username:");
+            const password = prompt("Enter Password:");
+
+            // Simple login validation (this should be replaced with proper authentication)
+            if (username === 'ta' && password === '1234') {
+                showPage('technicianDashboard');
+                renderTicketList();
+            } else {
+                alert('Invalid login credentials!');
+            }
+        }
+
+        function renderTicketList() {
+            const ticketListContainer = document.getElementById('ticketListContainer');
+            ticketListContainer.innerHTML = ''; // Clear existing list
+
+            tickets.forEach(ticket => {
+                if (!ticket.served) {
+                    const ticketItem = document.createElement('div');
+                    ticketItem.classList.add('ticket-item');
+                    ticketItem.innerHTML = `
+                        <div>Ticket #${ticket.ticketNumber} - ${ticket.serviceType}</div>
+                        <button onclick="serveTicket(${ticket.ticketNumber})">Mark as Served</button>
+                    `;
+                    ticketListContainer.appendChild(ticketItem);
+                }
+            });
+        }
+
+        function serveTicket(ticketNumber) {
+            const ticketIndex = tickets.findIndex(ticket => ticket.ticketNumber === ticketNumber);
+            if (ticketIndex > -1) {
+                tickets[ticketIndex].served = true;
+                alert(`Ticket #${ticketNumber} marked as served.`);
+                renderTicketList();
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <!-- Landing Page -->
+        <div id="landingPage" class="page active">
+            <div class="header">
+                <h2>RAT HAT SYSTEM</h2>
+            </div>
+            <button class="btn primary" onclick="showPage('servicesPage')">Request Ticket</button>
+            <button class="btn primary" onclick="loginTA()">Login</button>
+        </div>
+
+        <!-- Services Page -->
+        <div id="servicesPage" class="page">
+            <div class="header">
+                <button class="back-btn" onclick="showPage('landingPage')">Back</button>
+                <h2>Select Service</h2>
+            </div>
+            <button class="btn secondary" onclick="generateTicket('Face Scanning')">Face Scanning</button>
+            <button class="btn secondary" onclick="generateTicket('Printing Services')">Printing Services</button>
+            <button class="btn secondary" onclick="generateTicket('Software Troubleshooting')">Software Troubleshooting</button>
+            <button class="btn secondary" onclick="generateTicket('Printing Authorization')">Printing Authorization</button>
+            <a class="btn link" href="https://apiit.atlassian.net/servicedesk/customer/portals" target="_blank">IT Helpdesk</a>
+            <a class="btn link" href="https://apiit.atlassian.net/wiki/spaces/KB/overview" target="_blank">Knowledge Base</a>
+        </div>
+
+        <!-- Ticket Page -->
+        <div id="ticketPage" class="page">
+            <div class="header">
+                <button class="back-btn" onclick="showPage('servicesPage')">Back</button>
+                <h2>Ticket Information</h2>
+            </div>
+            <div class="ticket-info">
+                <h3>Your Ticket Number</h3>
+                <div id="ticketNumber" class="ticket-number">-</div>
+                <h3>Current Serving</h3>
+                <div id="currentNumber" class="current-number">-</div>
+                <div id="waitTime" class="wait-time">Estimated wait time: - minutes</div>
+                <div id="troubleshootingMessage" class="wait-time" style="display: none; margin-top: 8px;">
+                    Please refer to Knowledge Base. If the issue still persists, please wait for assistance.
+                </div>
+                <button class="btn primary" onclick="cancelTicket()">Cancel Ticket</button>
+            </div>
+        </div>
+
+        <!-- Technician Dashboard -->
+        <div id="technicianDashboard" class="page">
+            <div class="header">
+                <button class="back-btn" onclick="showPage('landingPage')">Back</button>
+                <h2>Dashboard</h2>
+            </div>
+            <div id="ticketListContainer" class="ticket-list"></div>
+        </div>
+    </div>
+</body>
+</html>
